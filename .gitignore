@@ -1,0 +1,24 @@
+# ignore all the backup files created by editors
+*~
+*.so
+*.o
+
+data/grossman_subjects.txt
+
+# things to ignore
+src/Makevars
+extdata/
+src/*.o
+src/*.o-*
+src/*.so
+src/symbols.rds
+
+# inst/doc
+vignettes/*pdf
+vignettes/*html
+
+.Rhistory
+R/.Rhistory
+
+.DS_Store
+.Rproj.user
