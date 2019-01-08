@@ -1,0 +1,19 @@
+Package: EigenNeuroAnatomy
+Type: Package
+Title: Exploring eigenanatomy methodologies for neuroimaging
+Version: 0.1
+Date: 2019-01-08
+Authors@R: person("Jeffrey", "Duda", email = "jeff.duda@gmail.com",
+                  role = c("aut", "cre"))
+Description: Exploring eigenanatomy methodologies for neuroimaging
+License: Apache License 2.0
+Depends:
+    ANTsRCore,
+Imports:
+    ANTsRCore
+Suggests:
+    ANTsR,
+    testthat
+LazyData: true
+LinkingTo: Rcpp, ITKR, ANTsRCore
+RoxygenNote: 6.1.0
