@@ -1,0 +1,104 @@
+---
+title: "EigenNeuroAnatomy"
+author: "Jeffrey T. Duda"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{EigenNeuroAnatomy}
+    \usepackage[utf8]{inputenc}
+---
+
+```{r, echo = FALSE, message = FALSE, include = FALSE}
+library( knitr )
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+library(ANTsRCore)
+#library(kirby21.dti)
+
+```
+
+## Overview
+This document provides some examples illustrating how ANTsR may be used to examine eigneanatomy in neuroimaging data
+
+```{r getdata,message=FALSE,warnings=FALSE, fig.width=7, fig.height=5, echo=TRUE}
+
+filelist = "~/pkg/EigenNeuroAnatomy/data/grossman_subjects.txt"
+filenames = as.character( read.table(filelist)[[1]] )
+nSubjects = length(filenames)
+
+# use pre-defined mask, or data-specific
+#mask = antsImageRead( "/data/grossman/pipedream2018/templates/OASIS/priors/priors2.nii.gz")
+meanImg = antsImageRead(filenames[1])
+for ( i in 2:nSubjects ) {
+  meanImg = meanImg + antsImageRead(filenames[i])
+}
+meanImg = meanImg / nSubjects
+mask = meanImg*0
+mask[ meanImg > 0.5 ] = 1
+
+ref = resampleImage(mask, c(2,2,2) )
+
+tx = createAntsrTransform( dimension=3, type="Euler3DTransform" )
+
+#mask = applyAntsrTransform( tx, mask, reference=ref, interpolation="Linear" )
+#mask[mask<0.5] = 0
+#mask[mask>0] = 1
+
+
+# optional sigma value for smoothing - faster than smoothing in call to sparseDecom?
+# could we "cheat" here: down-sample data, get regions, then upsample regions to full resolution
+#  this would save time, help with smaller data sets possibly?
+#mat = imageListToMatrix( filenames, mask )
+mat = matrix( 0, nrow=nSubjects, ncol=sum(mask) )
+for ( i in 1:nSubjects ) {
+  print(filenames[i])
+  img = antsImageRead(filenames[i])
+
+  # If downsampling
+  # img = applyAntsrTransformToImage( tx, img, ref, interpolation="linear")
+
+  # Intra-subject, relative measure
+  # img = img / mean( img[mask>0] ) # intra-subject normalization
+
+  # Smoothing
+  # img = smoothImage( img, sigma=2 )
+
+  mat[i,] = img[mask>0]
+
+}
+
+# group-based relative measure or nuisance regressors
+# mat = resid( lm( mat ~ rowMeans(mat)) )
+
+# scale data only ( for alternate decomp methods )
+# mat = scale(mat, center=FALSE)
+
+# center & scale data
+mat = scale(mat)
+
+# ICA-whiten
+mat = icawhiten( mat, nSubjects )
+
+nComp = 60
+eanatStruct = sparseDecom( inmatrix=mat,
+ inmask = mask,
+ sparseness=1.0/nComp,
+ nvecs = nComp,
+ cthresh=0,
+ its = 25,
+ mycoption=0,
+ maxBased = F,
+ verbose=T )
+
+eanat = eanatStruct$eigenanatomyimages
+emat1 = matrix( eanat[1,], nrow = nSubjects )
+print( paste("sparseness1",sum(abs(eanat[1,])>0)/sum(mask==1) ))
+
+
+
+
+
+
+
+
+```
